@@ -30,9 +30,13 @@ jobs:
       working-directory: ./terraform
 
     - name: Terraform Apply
-      run: terraform apply -auto-approve tfplan
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       working-directory: ./terraform
-
+      run: |
+         cd ./terraform
+         terraform apply -auto-approve tfplan
+      env:
+          TF_CLI_ARGS: "-no-color"
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
