@@ -32,7 +32,7 @@ jobs:
         working-directory: ./terraform
 
       - name: Terraform Plan
-        run: terraform plan -out=tfplan
+        run: terraform plan -out=tfplan -var-file="terraform.tfvars"
         working-directory: ./terraform
 
       - name: Terraform Apply
