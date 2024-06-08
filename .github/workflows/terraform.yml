@@ -3,10 +3,10 @@ name: Terraform Automation
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   terraform:
@@ -16,34 +16,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: List files in the root directory for debugging
-        run: ls -al
-
-      - name: List files in the terraform directory for debugging
-        run: ls -al ./terraform
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.1.0
 
       - name: Terraform Init
-        run: terraform init
-        working-directory: ./terraform
+        run: terraform init ./terraform
 
       - name: Terraform Plan
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve tfplan
-        working-directory: ./terraform
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          terraform plan -out=tfplan ./terraform
+          terraform show -json tfplan > tfplan.json
+        continue-on-error: true
+        env:
+          TF_CLI_ARGS: "-no-color"
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve tfplan | tee apply.log
-        working-directory: ./terraform
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve tfplan
+        env:
+          TF_CLI_ARGS: "-no-color"
 
       - name: View Apply Logs
-        run: cat apply.log
         if: always()
+        run: cat tfplan.json || echo "No tfplan.json found"
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
